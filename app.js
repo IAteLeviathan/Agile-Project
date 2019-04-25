@@ -4,6 +4,7 @@ const hbs = require('hbs');
 const axios = require('axios');
 const _ = require('lodash');
 const port = process.env.PORT || 8080;
+var test = require(test)
 const fs = require('fs');
 
 var authentication = false;
