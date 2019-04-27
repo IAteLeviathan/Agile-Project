@@ -1,3 +1,32 @@
+// initialize firebase
+const admin = require('firebase-admin');
+var serviceAccount = require('../Agile-Project/servicekey.json');
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+
+// firestore database
+var fbdb = admin.firestore();
+
+// example of how to change the user 'frank'
+var docRef = fbdb.collection('users').doc('frank');
+var setfrank = docRef.set({
+    First_Name: 'Ruru',
+    Last_Name: 'Lulu'
+});
+
+// reading data from 'users'
+fbdb.collection('users').get()
+    .then((snapshot) => {
+        snapshot.forEach((doc) => {
+            console.log(doc.id, '=>', doc.data());
+        });
+    })
+    .catch((err) => {
+        console.log('Error getting documents', err);
+    });
+
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const hbs = require('hbs');
