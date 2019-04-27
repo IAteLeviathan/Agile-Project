@@ -26,7 +26,6 @@ fbdb.collection('users').get()
         console.log('Error getting documents', err);
     });
 
-
 const express = require('express');
 const bodyParser = require('body-parser');
 const hbs = require('hbs');
@@ -34,6 +33,7 @@ const axios = require('axios');
 const _ = require('lodash');
 const port = process.env.PORT || 8080;
 const fs = require('fs');
+
 
 var authentication = false;
 var user = 'Characters';
@@ -215,7 +215,7 @@ app.post('/create_character', (request, response) => {
                     character_name: character_name,
                     email: user,
                     health: healthy,
-                    dps: _.round(healthy*3),
+                    dps: _.round(healthy/3),
                     win: 0,
                     lose: 0
                 }, (err, result) => {
