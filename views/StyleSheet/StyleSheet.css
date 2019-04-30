@@ -3,17 +3,17 @@ nav {
 }
 
 .background {
-    background-image: url("../Images/background.jpg");
+    background-image: url("https://media0.giphy.com/media/6Fv0CNDM519OU/giphy.gif");
     background-attachment: fixed;
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
     height: 100%;
+
 }
 
 .lightbox {
     background:rgba(61, 55, 55,0.4);
-    border: 20px solid rgb(0, 0, 0);
     padding: 50px;
     width: 100%;
     float: none;
@@ -22,6 +22,7 @@ nav {
     margin: 0 auto;
     text-align: center;
     color: white;
+    
 }
 .title {
     text-align: Center;
@@ -38,4 +39,9 @@ nav {
     color: #E3E3E3;
     font-family: 'Gloria Hallelujah', cursive;
     font-size: 20px;
+}
+
+.signup {
+      background-image: linear-gradient(red, yellow);
+
 }

@@ -1,18 +1,17 @@
-const express = require('reza_was_here');
-const bodyParser = require('body-parser');
-const hbs = require('hbs');
-const axios = require('axios');
-const _ = require('lodash');
-const port = process.env.PORT || 8080;
-var test = require(test)
-const fs = require('fs');
+var express = require('express');
+var bodyParser = require('body-parser');
+var hbs = require('hbs');
+var axios = require('axios');
+var _ = require('lodash');
+var port = process.env.PORT || 8080;
+var fs = require('fs');
 
 var authentication = false;
 var user = 'Characters';
 
-const user_db = require('./javascript/user_db.js');
-const character_db = require('./javascript/character_db.js');
-const fight = require('./javascript/fighting_saves');
+var user_db = require('./javascript/user_db.js');
+var character_db = require('./javascript/character_db.js');
+var fight = require('./javascript/fighting_saves');
 
 var name = user_db.email_get(user);
 var app = express();
@@ -110,6 +109,7 @@ app.get('/character', (request, response) => {
                     var health = item[0].health;
                     var dps = item[0].dps;
                     var name = user_db.email_get(user);
+                    var avatar = item[0].user_avatar;
 
                     response.render('character.hbs', {
                         title_page: 'My Character Page',
@@ -117,7 +117,8 @@ app.get('/character', (request, response) => {
                         username: name,
                         character_name: `${character_name}`,
                         character_health: `${health}`,
-                        character_dps: `${dps}`
+                        character_dps: `${dps}`,
+                        character_image: `${avatar}`
                     })
                 } catch (e) {
                     var name = user_db.email_get(user);
@@ -183,13 +184,16 @@ app.post('/create_character', (request, response) => {
                 }
             } catch (e) {
                 var healthy = _.random(1, 100);
+                var avatar = ['https://banner2.kisspng.com/20180417/uww/kisspng-gabumon-digimon-adventure-tri-character-digimon-5ad6558b5b0030.4793955015239960433728.jpg','https://cdn1-www.gamerevolution.com/assets/uploads/2018/07/New-Digimon-Game-July-2018.jpg'];
+                var rand = avatar[Math.floor(Math.random() * avatar.length)];
                 db.collection('Character').insertOne({
                     character_name: character_name,
                     email: user,
                     health: healthy,
                     dps: _.round(healthy/3),
                     win: 0,
-                    lose: 0
+                    lose: 0,
+                    user_avatar: rand
                 }, (err, result) => {
                     if (err) {
                         response.send('Unable to insert stats');
@@ -222,7 +226,7 @@ app.get('/account', (request, response) => {
                         email: user,
                         header: 'Account'
                     })
-                } catch {
+                } catch(e) {
                     response.redirect("/account_error");
                 }
             }
