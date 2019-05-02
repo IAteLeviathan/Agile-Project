@@ -56,6 +56,15 @@ app.get('/index_b', (request, response) => {
     })
 });
 
+
+app.get('/store', (request, response) => {
+    response.render('store.hbs', {
+        title_page: 'Welcome to the store',
+        header: 'BUY',
+        username: user
+    })
+});
+
 app.post('/user_logging_in', (request, response) => {
     var email = request.body.email;
     var password = request.body.password;
