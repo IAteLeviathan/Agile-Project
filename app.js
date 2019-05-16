@@ -1,19 +1,44 @@
-var express = require('express');
-var bodyParser = require('body-parser');
-var hbs = require('hbs');
-var axios = require('axios');
-var _ = require('lodash');
-var port = process.env.PORT || 8080;
-var fs = require('fs');
+
+// initialize firebase
+// const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+const serviceAccount = require('../Agile-Project/servicekey.json');
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+const firebase = require('firebase');
+var firebaseConfig = {
+    apiKey: "AIzaSyCJorziWo3lcBRSxEqaTD-WMFEP-0VxqOY",
+    authDomain: "test-6ec85.firebaseapp.com",
+    databaseURL: "https://test-6ec85.firebaseio.com",
+    projectId: "test-6ec85",
+    storageBucket: "test-6ec85.appspot.com",
+    messagingSenderId: "483947477248"
+};
+firebase.initializeApp(firebaseConfig);
+
+// declaring variable for firestore
+var fbdb = admin.firestore();
+
+const express = require('express');
+const bodyParser = require('body-parser');
+const hbs = require('hbs');
+const axios = require('axios');
+const _ = require('lodash');
+const port = process.env.PORT || 8080;
+const fs = require('fs');
+
 
 var authentication = false;
 var user = 'Characters';
+var hbucks = 0;
 
-var user_db = require('./javascript/user_db.js');
-var character_db = require('./javascript/character_db.js');
-var fight = require('./javascript/fighting_saves');
+const user_db = require('./javascript/user_db.js');
+const fight = require('./javascript/fighting_saves.js');
 
-var name = user_db.email_get(user);
+var f_name = '';
+var user_email = '';
+
 var app = express();
 hbs.registerPartials(__dirname + '/views/partials');
 
@@ -46,37 +71,45 @@ app.get('/logout', (request, response) => {
     response.redirect('/');
 });
 
-app.get('/index_b', (request, response) => {
-    var name = user_db.email_get(user);
+app.get('/index_b', async (request, response) => {
+    var getmoney = await fbdb.collection('users').doc(user_email).get();
+    console.log(hbucks);
+    hbucks = await getmoney.data()['hbucks'];
+    console.log(hbucks);
     response.render('index_b.hbs', {
         title_page: 'Official Front Page',
         header: 'Fight Simulator',
-        welcome: `Welcome ${name}`,
-        username: name
+        welcome: `Welcome ${f_name}`,
+        username: f_name
     })
 });
 
-
-app.get('/store', (request, response) => {
-    response.render('store.hbs', {
-        title_page: 'Welcome to the store',
-        header: 'BUY',
-        username: user
-    })
-});
-
-app.post('/user_logging_in', (request, response) => {
+app.post('/user_logging_in', async (request, response) => {
     var email = request.body.email;
     var password = request.body.password;
-    var output = user_db.login_check(email, password);
-
-    if (output === 'Success!') {
+    var output = '';
+    // var output = await user_db.login_check(email, password);
+    var output = firebase.auth().signInWithEmailAndPassword(email, password)
+    .then(async function () {
         authentication = true;
-        user = email;
-        response.redirect('/index_b')
-    } else {
-        response.redirect('/')
-    }
+        var alex = await fbdb.collection('users').doc(email).get();
+        f_name = await alex.data()['f_name'];
+        user_email = email;
+        response.redirect('/index_b');
+    })
+    .catch(function(error) {
+        var errorCode = error.code;
+        var errorMessages = error.message;
+        if (error.code === 'auth/invalid-email') {
+            response.redirect('/')
+        } else if (error.code === 'auth/user-disabled') {
+            response.redirect('/')
+        } else if (error.code === 'auth/user-not-found') {
+            response.redirect('/')
+        } else (
+            response.redirect('/')
+        )
+    });
 });
 
 app.get('/sign_up', (request, response) => {
@@ -93,7 +126,6 @@ app.post('/insert', (request, response) => {
     var email = request.body.email;
     var password = request.body.password;
     var password_repeat = request.body.password_repeat;
-
     var output = user_db.add_new_user(first_name, last_name, email, password, password_repeat);
 
     response.render('sign_up.hbs', {
@@ -104,142 +136,117 @@ app.post('/insert', (request, response) => {
     })
 });
 
-app.get('/character', (request, response) => {
+app.get('/character', async (request, response) => {
     if (authentication === false) {
         response.redirect('/')
     } else {
-        var db = character_db.getDb();
-        db.collection('Character').find({email: user}).toArray((err, item) => {
-            if (err) {
-                console.log(err)
-            } else {
-                try {
-                    var character_name = item[0].character_name;
-                    var health = item[0].health;
-                    var dps = item[0].dps;
-                    var name = user_db.email_get(user);
-                    var avatar = item[0].user_avatar;
-
-                    response.render('character.hbs', {
-                        title_page: 'My Character Page',
-                        header: 'Character Stats',
-                        username: name,
-                        character_name: `${character_name}`,
-                        character_health: `${health}`,
-                        character_dps: `${dps}`,
-                        character_image: `${avatar}`
-                    })
-                } catch (e) {
-                    var name = user_db.email_get(user);
-                    response.render('character.hbs', {
-                        title_page: 'My Character Page',
-                        header: 'Character Stats',
-                        username: name,
-                        character_name: 'CREATE CHARACTER NOW',
-                        character_health: 'CREATE CHARACTER NOW',
-                        character_dps: 'CREATE CHARACTER NOW'
-                    })
-                }
-            }
-        });
-    }
-});
-
-app.get('/character_creation', (request, response) => {
-    if (authentication === false) {
-        response.redirect('/')
-    } else {
-        var db = character_db.getDb();
-        var name = user_db.email_get(user);
-        db.collection('Character').find({email: user}).toArray((err, items) => {
-            if (err) {
-                response.send(`alert('Cannot find it')`)
-            } else {
-                try {
-                    if (items[0].email === user) {
-                        output = "You already have a character ready for battle!";
-                        response.render('character_creation.hbs', {
-                            title_page: 'Character Creation',
-                            header: 'Create Character',
-                            username: name,
-                            output_error: `${output}`
-                        })
-                    }
-                } catch (e) {
-                    output = "Create a character now!";
-                    response.render('character_creation.hbs', {
-                        title_page: 'Character Creation',
-                        header: 'Create Character',
-                        username: name,
-                        output_error: `${output}`
-                    })
-                }
-            }
-        });
-    }
-});
-
-app.post('/create_character', (request, response) => {
-    var character_name = request.body.character_name;
-    var db = character_db.getDb();
-
-    db.collection('Character').find({email: user}).toArray( (err, item) => {
-        if (err) {
-            response.send('Unable to get all students')
-        } else {
+        var exist = await user_db.check_character_exist(user_email);
+        if (exist === true) {
             try {
-                if(item[0].email === user) {
-                    response.redirect('/character_creation')
-                }
+                var users_character = await fbdb.collection('characters').doc(user_email).get();
+                var character_name = await users_character.data()['character_name'];
+                var health = await users_character.data()['character_health'];
+                var dps = await users_character.data()['character_dps'];
+                var avatar = await users_character.data()['user_avatar'];
+
+
+                response.render('character.hbs', {
+                    title_page: 'My Character Page',
+                    header: 'Character Stats',
+                    username: f_name,
+                    character_name: `${character_name}`,
+                    character_health: `${health}`,
+                    character_dps: `${dps}`,
+                    character_image: `${avatar}`
+                })
             } catch (e) {
-                var healthy = _.random(1, 100);
-                var avatar = ['https://banner2.kisspng.com/20180417/uww/kisspng-gabumon-digimon-adventure-tri-character-digimon-5ad6558b5b0030.4793955015239960433728.jpg','https://cdn1-www.gamerevolution.com/assets/uploads/2018/07/New-Digimon-Game-July-2018.jpg'];
-                var rand = avatar[Math.floor(Math.random() * avatar.length)];
-                db.collection('Character').insertOne({
-                    character_name: character_name,
-                    email: user,
-                    health: healthy,
-                    dps: _.round(healthy/3),
-                    win: 0,
-                    lose: 0,
-                    user_avatar: rand
-                }, (err, result) => {
-                    if (err) {
-                        response.send('Unable to insert stats');
-                    }
-                    response.redirect('/character')
-                });
+                response.render('character.hbs', {
+                    title_page: 'My Character Page',
+                    header: 'Character Stats',
+                    username: f_name,
+                    character_name: 'CREATE CHARACTER NOW',
+                    character_health: 'CREATE CHARACTER NOW',
+                    character_dps: 'CREATE CHARACTER NOW'
+                })
             }
+        } else {
+            response.render('character.hbs', {
+                title_page: 'My Character Page',
+                header: 'Character Stats',
+                username: f_name,
+                character_name: 'CREATE CHARACTER NOW',
+                character_health: 'CREATE CHARACTER NOW',
+                character_dps: 'CREATE CHARACTER NOW'
+            })
         }
-    });
+    }
 });
 
+app.get('/character_creation', async (request, response) => {
+    if (authentication === false) {
+        response.redirect('/')
+    } else {
+        var exist = await user_db.check_character_exist(user_email);
+        if (exist === true) {
+            output = "You already have a character ready for battle!";
+            response.render('character_creation.hbs', {
+                title_page: 'Character Creation',
+                header: 'Create Character',
+                username: f_name,
+                output_error: `${output}`
+            })
+        }
+        output = "Create a character now!";
+        response.render('character_creation.hbs', {
+            title_page: 'Character Creation',
+            header: 'Create Character',
+            username: f_name,
+            output_error: `${output}`
+        })
+    }
+});
 
-app.get('/account', (request, response) => {
+app.post('/create_character', async (request, response) => {
+    var character_name = request.body.character_name;
+    var exist = await user_db.check_character_exist(user_email);
+    if (exist === true) {
+        response.redirect('/character_creation')
+    } else {
+        var healthy = _.random(1, 100);
+        var avatar = ['images/a1.png','images/a2.png', 'images/a3.png'];
+        var rand = avatar[Math.floor(Math.random() * avatar.length)];
+        var dps = _.round(healthy / 3);
+        fbdb.collection('characters').doc(user_email).set({
+            character_name: character_name,
+            character_health: healthy,
+            character_dps: dps,
+            win: 0,
+            loss: 0,
+            user_avatar: rand
+        });
+        response.redirect('/character')
+    }
+});
+
+app.get('/account', async (request, response) => {
     if (authentication === false) {
         response.redirect('/');
     } else {
-        var name = user_db.email_get(user);
-        character_db.getDb().collection('Character').find({email: user}).toArray((err, item) => {
-            if (err) {
-                console.log(err);
-            } else{
-                try {
-                    var win = item[0].win;
-                    var loses = item[0].lose;
-                    var user = item[0].email;
-                    response.render('account.hbs', {
-                        name: name,
-                        win: win,
-                        losses: loses,
-                        email: user,
-                        header: 'Account'
-                    })
-                } catch(e) {
-                    response.redirect("/account_error");
-                }
-            }
-        });
+        var alex = await fbdb.collection('users').doc(user_email).get();
+        try {
+            var win = alex.data()['win'];
+            var loses = alex.data()['loss'];
+            var name = alex.data()['f_name'];
+            response.render('account.hbs', {
+                name: name,
+                win: win,
+                losses: loses,
+                email: user_email,
+                header: 'Account'
+            })
+        } catch(e) {
+            response.redirect("/account_error");
+        }
     }
 });
 
@@ -248,7 +255,7 @@ app.get('/account_error', (request, response) => {
         response.redirect('/');
     } else {
         var name = user_db.email_get(user);
-        response.render('account_error.hbs',{
+        response.render('account_error.hbs', {
             email: user,
             header: 'Account',
             name: name
@@ -256,115 +263,92 @@ app.get('/account_error', (request, response) => {
     }
 });
 
-app.get('/fight', (request, response) => {
+app.get('/fight', async (request, response) => {
     var outcome = 'Win';
 
     if (authentication === false) {
         response.redirect('/');
     } else {
-        // console.log(response.body);
-        var db = character_db.getDb();
-        db.collection('Character').find({email: user}).toArray( (err, item) => {
-            if (err) {
-                console.log(err)
-            } else {
-                try {
-                    var name_player = item[0].character_name;
-                    var health_player = item[0].health;
-                    var dps_player = item[0].dps;
+        var character_db = await fbdb.collection('characters').doc(user_email).get();
+        try {
+            var name_player = character_db.data()['character_name'];
+            var health_player = character_db.data()['character_health'];
+            var dps_player = character_db.data()['character_dps'];
+            var health_enemy = _.random(health_player - 10, _.round(health_player + 5));
+            var dps_enemy = _.random(dps_player - 10, dps_player + 3);
+            var avatar =  character_db.data()['user_avatar'];
 
-                    var health_enemy = _.random(health_player - 10, _.round(health_player + 5));
-                    var dps_enemy = _.random(dps_player - 10, dps_player + 3);
+            fight.add_info(name_player, health_player, dps_player, health_enemy, dps_enemy);
 
-                    fight.add_info(name_player, health_player, dps_player, health_enemy, dps_enemy);
-
-                    arena_stats = fight.get_info(); //This is a dictionary
-
-                    response.render('fighting.hbs', {
-                        title_page: `Let's fight!`,
-                        header: 'Fight Fight Fight!',
-                        username: user,
-                        character_name: `${name_player}`,
-                        enemy_name: `The Enemy`,
-                        health_player: `Health: ${health_player}`,
-                        dps_player: `DPS: ${dps_player}`,
-                        health_enemy: `Health: ${arena_stats.enemy_health}`,
-                        dps_enemy: `DPS: ${arena_stats.enemy_dps}`
-                    })
-                } catch (e) {
-                    response.render('fighting.hbs', {
-                        title_page: 'Error 404',
-                        header: 'Error 404'
-                    })
-                }
-            }
-        })
+            response.render('fighting.hbs', {
+                title_page: `Let's fight!`,
+                header: 'Fight Fight Fight!',
+                username: f_name,
+                character_name: `${name_player}`,
+                enemy_name: `The Enemy`,
+                health_player: `Health: ${health_player}`,
+                dps_player: `DPS: ${dps_player}`,
+                health_enemy: `Health: ${health_enemy}`,
+                dps_enemy: `DPS: ${dps_enemy}`,
+                character_image: `${avatar}`
+            })
+        } catch (e) {
+            response.render('fighting.hbs', {
+                title_page: 'Error 404',
+                header: 'Error 404'
+            })
+        }
     }
 });
 
-app.get('/battle', (request, response) => {
+app.get('/battle', async (request, response) => {
     if (authentication === false) {
         response.redirect('/')
     } else {
-        var arena_stats = fight.get_info(); //This is a dictionary
-
-        var player_name = arena_stats.player_name;
-
-        var player_health = arena_stats.player_health;
-        var player_dps = arena_stats.player_dps;
-
-        var enemy_health = arena_stats.enemy_health;
-        var enemy_dps = arena_stats.enemy_dps;
-
+        var arena_stats = await fight.get_info(); //This is a dictionary
+        var player_name = arena_stats.name;
+        var player_health = arena_stats.health;
+        var player_dps = arena_stats.dps;
+        var enemy_health = arena_stats.health_enemy;
+        var enemy_dps = arena_stats.dps_enemy;
         var new_player_health = player_health - enemy_dps;
         var new_enemy_health = enemy_health - player_dps;
+
 
         if (new_player_health > new_enemy_health && new_player_health > 0) {
             reply = 'You are winning!'
         } else if (new_enemy_health > new_player_health && new_player_health > 0) {
             reply = 'Enemy is winning'
         }
-
         fight.add_info(player_name, new_player_health, player_dps, new_enemy_health, enemy_dps);
 
         if (new_player_health <= 0 && new_enemy_health > 0 || new_player_health <= 0 && new_enemy_health <= 0) {
-            var db = character_db.getDb();
-            db.collection('Character').find({email: user}).toArray((err, item) => {
-                if (err) {
-                    console.log(err)
-                } else {
-                    var lose = item[0].lose;
-                    db.collection('Character').updateOne({email: user}, {'$set': {'lose': lose + 1}}, (err, item) => {
-                        if (err) {
-                            console.log(err)
-                        } else {
-                            var lose = 'YOU LOSE';
-                            response.render('win_lose_page.hbs', {
-                                win_lose: `${lose}`
-                            })
-                        }
-                    })
-                }
-            })
+            var current = await fbdb.collection('users').doc(user_email).get();
+            var lose = {
+                loss: (current.data()['loss'] + 1)
+            };
+            fbdb.collection('users').doc(user_email).update(lose);
+            var lost = 'YOU LOSE';
+            response.render('win_lose_page.hbs', {
+                win_lose: `${lost}`
+            });
         } else if (new_enemy_health <= 0 && new_player_health > 0) {
-            character_db.getDb().collection('Character').find({email: user}).toArray((err, item) => {
-                if (err) {
-                    console.log(err)
-                } else {
-                    var win = item[0].win;
-                    var health = item[0].health;
-                    var dps = item[0].dps;
-                    character_db.getDb().collection('Character').updateOne({email: user}, {'$set': {'health': health +5, 'dps': dps + 3, 'win': win + 1}}, (err, item) => {
-                        if (err) {
-                            console.log(err)
-                        } else {
-                            var win = 'YOU WIN!';
-                            response.render('win_lose_page.hbs', {
-                                win_lose: `${win}`
-                            })
-                        }
-                    })
-                }
+            var current = await fbdb.collection('users').doc(user_email).get();
+            var win = {
+                win: (current.data()['win'] + 1)
+            };
+            fbdb.collection('users').doc(user_email).update(win);
+            var won = 'YOU WIN!';
+            var randomaward = Math.floor((Math.random() * 10) + 1);
+            hbucks = {
+                hbucks: (current.data()['hbucks'] + randomaward)
+            };
+            console.log(hbucks);
+            fbdb.collection('users').doc(user_email).update(hbucks);
+            console.log(randomaward);
+            response.render('win_lose_page.hbs', {
+                win_lose: `${won}`,
+                currency_earned: randomaward
             })
         } else {
             response.render('fighting.hbs', {
@@ -378,24 +362,26 @@ app.get('/battle', (request, response) => {
                 health_enemy: `Health: ${new_enemy_health}`,
                 dps_enemy: `DPS: ${enemy_dps}`,
                 outcome: `${reply}`
+        
             })
         }
     }
-
 });
 
 app.get('/win_lose_page', (request, response) => {
     if (authentication === false) {
         response.redirect('/');
     } else {
-        response.render('win_lose_page.hbs',{
+        response.render('win_lose_page.hbs', {
         })
     }
 });
 
 app.post('/update', (request, response) => {
-    var db = character_db.getDb();
-    db.collection('Character').updateOne({email:user},{'$set': {'character_name': request.body.new_name}});
+    var new_name = {
+        character_name: request.body.new_name
+    };
+    fbdb.collection('characters').doc(user_email).update(new_name)
     response.redirect('/character')
 });
 
@@ -408,14 +394,12 @@ app.get('/update_name', (request, response) => {
 });
 
 app.post('/delete', (request, response) => {
-    var db = character_db.getDb();
-    db.collection('Character').deleteOne({email:user}, (err, items) => {
-        console.log(items)
-    });
+    fbdb.collection('characters').doc(user_email).delete();
     response.redirect("/character")
 });
 
 app.listen(port, () => {
     console.log(`Server is up on the port ${port}`);
-    character_db.init();
 });
+
+module.exports = app;
