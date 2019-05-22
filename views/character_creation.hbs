@@ -11,51 +11,51 @@
     <link href="https://fonts.googleapis.com/css?family=Gugi" rel="stylesheet">
     <script src="testavatar.js"></script>
 </head>
-<body class="background">
-{{> nav_bar_char}}
-<h1>{{> header}}</h1>
+<body id="bodyhome">
+<div class="video-header wrap">
+    <div class="fullscreen-video-wrap">
+        <video playsinline="playsinline" autoplay="autoplay" muted="muted" loop="loop">
+            <source src="Images/background_create.mp4" type="video/mp4">
+        </video>
+    </div>
+</div>
+
+<div class="header-overlay">
+    <div class="header-content">
+        {{> nav_bar_char}}
+        <h1>{{> header}}</h1>
 
 
-<div class="container" >
-    <div class="row" >
+        <div class="container" >
+            <div class="row" >
 
-        <div class="col-md-4 lightbox">
-            <form method="POST" action="/create_character">
-                <label>
-                    <b>Character Name</b>
-                    <br>
-                    <input class="form-control" label="name" type="text" placeholder="Enter Character Name" name="character_name" required minlength="1">
-                    <br><br>
-                    <div class="dropdown">
-                        <div class="form-group">
-                            <label for="sel1">Choose Character Class:</label>
-                            <select class="form-control" id="character_class" name="character_class">
-                                <option>Axe</option>
-                                <option>Spear</option>
-                                <option>Sword</option>
-                            </select>
-                        </div>
-                    </div>
-                    <br>
-                    <div class="dropdown">
-                        <div class="form-group">
-                            <label for="sel2">Choose Gender:</label>
-                            <select class="form-control" id="character_gender" name="character_gender">
-                                <option>Male</option>
-                                <option>Female</option>
-                                <option>Undecided</option>
-                            </select>
-                        </div>
-                    </div>
-                    <br>
-                    <input type="submit" value="Create" class="btn btn-dark">
+                <div class="col-md-4 lightbox">
+                    <form method="POST" action="/create_character">
+                        <label>
+                            <b>Character Name</b>
+                            <br>
+                            <input class="form-control" label="name" type="text" placeholder="Enter Character Name" name="character_name" required minlength="1">
+                            <br><br>
+                            <div class="dropdown">
+                                <div class="form-group">
+                                    <label for="sel1">Choose Character Class:</label>
+                                    <select class="form-control" id="character_class" name="character_class">
+                                        <option>Axe</option>
+                                        <option>Spear</option>
+                                        <option>Sword</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <br>
+                            <input type="submit" value="Create" class="btn btn-dark">
 
-                </label>
-            </form>
+                        </label>
+                    </form>
 
-            <h1>{{output_error}}</h1>
+                    <h1>{{output_error}}</h1>
+                </div>
+            </div>
         </div>
-
     </div>
 </div>
 
