@@ -147,6 +147,7 @@ app.get('/character', async (request, response) => {
                 var character_name = await users_character.data()['character_name'];
                 var health = await users_character.data()['character_health'];
                 var dps = await users_character.data()['character_dps'];
+                
                 var avatar = await users_character.data()['user_avatar'];
 
 
