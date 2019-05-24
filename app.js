@@ -37,7 +37,6 @@ var hbucks = 0;
 
 const user_db = require('./javascript/user_db.js');
 const character_db = require('./javascript/character_db.js');
-
 const fight = require('./javascript/fighting_saves.js');
 
 var f_name = '';
@@ -854,11 +853,10 @@ app.get('/account_error', (request, response) => {
     if (authentication === false) {
         response.redirect('/');
     } else {
-        var name = user_db.email_get(user);
         response.render('account_error.hbs', {
-            email: user,
+            email: user_email,
             header: 'Account',
-            name: name
+            name: f_name
         })
     }
 });

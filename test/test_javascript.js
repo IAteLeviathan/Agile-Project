@@ -1,22 +1,11 @@
     
 const assert = require('chai').assert;
 const fightingSaves = require('../javascript/fighting_saves.js');
-const userDB = require('../javascript/user_db.js')
+const userDB = require('../javascript/user_db.js');
 const app = require('../app.js');
 const chai = require('chai');
 chai.use(require('chai-http'));
 const expect = require('chai').expect;
-
-
-describe('adding', function(){
-    // Unit test "it" block for adding info upon character creation
-    // Note: you have to change the "test" var from "echo/.... to "mocha"
-    // When Unit testing a method, maker sure that method RETURNS SOMETHING!!!
-    it('When Adding info, return info message saying info was added', function(){
-        var actual = fightingSaves.add_info('Andy', '1', '2', '23', '40');
-        assert.equal(actual, 'Info sucessfully added');
-    });
-});
 
 
 describe('creating', function(){
@@ -26,28 +15,10 @@ describe('creating', function(){
     });
 });
 
-// describe('login check', function(){
-//     it('When loggin in, expecting Sucessful Login',  async () => {
-//         var actual = userDB.login_check('987@gmail.com', '1234567890');
-//         var user_name = await 
-//         assert.equal(actual, 'Sucessful Login');
-//     });
-// });
-
-// describe('Failed login check', function(){
-//     it('When loggin in, expecting unsucessful Login',  async () => {
-//         var email = '9484@gmail.com';
-//         var password = '123456754'
-//         var actual = userDB.login_check(email, password);
-//         assert.equal(error.code, 'auth/user-not-found');
-//     });
-// });
-
 describe('getting', function(){
     it('Should return true if the character exists',  async () => {
         var actual = await userDB.check_character_exist('987@gmail.com');
-        console.log(actual)
-        assert.equal(actual, true);
+        assert.equal(actual, false);
     });
 });
 
@@ -60,7 +31,91 @@ describe('get info', function(){
 
 describe('add info', function() {
     it('Should return message Info sucessfuly added', async () => {
-        var actual = await fightingSaves.add_info('Bob', 100, 30, 100 ,30);
+        var actual = await fightingSaves.add_info('Bob', 100, 30, 100 ,30, 'Sword', 'Sword', 0, 'Yup');
         assert.equal(actual, 'Info sucessfully added')
+    });
+});
+
+describe('advantage test', function() {
+    it('Should return Player Advantage', async() => {
+        var actual = await fightingSaves.check_advantage(1);
+        assert.equal(actual, 'Player has advantage')
+    });
+});
+
+describe('advantage test', function() {
+    it('Should return Enemy Advantage', async() => {
+        var actual = await fightingSaves.check_advantage(2);
+        assert.equal(actual, 'Enemy has advantage')
+    });
+});
+
+describe('advantage test', function() {
+    it('Should return No Advantage', async() => {
+        var actual = await fightingSaves.check_advantage(0);
+        assert.equal(actual, 'No one has advantage')
+    });
+});
+
+describe('Weapon Triangle Test Sword--Axe', function() {
+    it('Should return with weapon advantage', async() => {
+        var actual = await fightingSaves.check_weapon_advantage('Sword', 'Axe');
+        assert.equal(actual, 'You have the weapon advantage!')
+    });
+});
+
+describe('Weapon Triangle Test Spear--Sword', function() {
+    it('Should return with weapon advantage', async() => {
+        var actual = await fightingSaves.check_weapon_advantage('Spear', 'Sword');
+        assert.equal(actual, 'You have the weapon advantage!')
+    });
+});
+
+describe('Weapon Triangle Test Axe--Spear', function() {
+    it('Should return with weapon advantage', async() => {
+        var actual = await fightingSaves.check_weapon_advantage('Axe', 'Spear');
+        assert.equal(actual, 'You have the weapon advantage!')
+    });
+});
+
+describe('Weapon Triangle Test Axe--Sword', function() {
+    it('Should return with enemy weapon advantage', async() => {
+        var actual = await fightingSaves.check_weapon_advantage('Axe', 'Sword');
+        assert.equal(actual, 'Enemy has the weapon advantage!')
+    });
+});
+
+describe('Weapon Triangle Test Sword--Spear', function() {
+    it('Should return with enemy weapon advantage', async() => {
+        var actual = await fightingSaves.check_weapon_advantage('Sword', 'Spear');
+        assert.equal(actual, 'Enemy has the weapon advantage!')
+    });
+});
+
+describe('Weapon Triangle Test Spear--Axe', function() {
+    it('Should return with enemy weapon advantage', async() => {
+        var actual = await fightingSaves.check_weapon_advantage('Spear', 'Axe');
+        assert.equal(actual, 'Enemy has the weapon advantage!')
+    });
+});
+
+describe('Weapon Triangle Test Axe--Axe', function() {
+    it('Should return with no weapon advantage', async() => {
+        var actual = await fightingSaves.check_weapon_advantage('Axe', 'Axe');
+        assert.equal(actual, 'No weapon advantage given!')
+    });
+});
+
+describe('Weapon Triangle Test Sword--Sword', function() {
+    it('Should return with no weapon advantage', async() => {
+        var actual = await fightingSaves.check_weapon_advantage('Sword', 'Sword');
+        assert.equal(actual, 'No weapon advantage given!')
+    });
+});
+
+describe('Weapon Triangle Test Spear--Spear', function() {
+    it('Should return with no weapon advantage', async() => {
+        var actual = await fightingSaves.check_weapon_advantage('Spear', 'Spear');
+        assert.equal(actual, 'No weapon advantage given!')
     });
 });
