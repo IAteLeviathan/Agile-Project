@@ -1,2 +1,2 @@
-# dank-node-project
+# node-project
 node project files
