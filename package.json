@@ -24,7 +24,7 @@
     "fs": "0.0.1-security",
     "hbs": "^4.0.4",
     "messagebird": "^2.4.1",
-    "mocha": "^6.1.4",
+    "mocha": "^10.2.0",
     "mockingbird": "^0.3.0",
     "mongodb": "^3.2.3",
     "nock": "^10.0.6",
